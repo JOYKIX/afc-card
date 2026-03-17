@@ -49,6 +49,7 @@ const elements = {
     resetBtn: document.getElementById('resetBtn'),
     boosterContainer: document.getElementById('boosterContainer'),
     albumContainer: document.getElementById('albumContainer'),
+    rarityFilters: document.getElementById('rarityFilters'),
 };
 
 const defaultState = {
@@ -57,6 +58,20 @@ const defaultState = {
 };
 
 let state = loadState();
+
+
+const rarityThemes = {
+    SSS: { label: 'SSS · Aurora Mythic', className: 'rarity-sss' },
+    SPlus: { label: 'S+ · Diamond Prism', className: 'rarity-splus' },
+    S: { label: 'S · Damier Holo', className: 'rarity-s' },
+    A: { label: 'A · Nebula Shine', className: 'rarity-a' },
+    B: { label: 'B · Pulse Foil', className: 'rarity-b' },
+    C: { label: 'C · Bronze Spark', className: 'rarity-c' },
+    D: { label: 'D · Classic Matte', className: 'rarity-d' },
+};
+
+let selectedRarityFilter = 'ALL';
+
 
 function loadState() {
     const raw = localStorage.getItem(SAVE_KEY);
@@ -232,10 +247,44 @@ function renderBooster(cardIds) {
     });
 }
 
+function createRarityFilters() {
+    elements.rarityFilters.replaceChildren();
+
+    const allButton = document.createElement('button');
+    allButton.type = 'button';
+    allButton.className = `filter-chip ${selectedRarityFilter === 'ALL' ? 'active' : ''}`;
+    allButton.textContent = 'Toutes';
+    allButton.setAttribute('aria-pressed', selectedRarityFilter === 'ALL');
+    allButton.addEventListener('click', () => {
+        selectedRarityFilter = 'ALL';
+        createRarityFilters();
+        renderAlbum();
+    });
+    elements.rarityFilters.appendChild(allButton);
+
+    rarityOrder.forEach((rarity) => {
+        const button = document.createElement('button');
+        const theme = rarityThemes[rarity];
+        button.type = 'button';
+        button.className = `filter-chip ${theme.className} ${selectedRarityFilter === rarity ? 'active' : ''}`;
+        button.textContent = theme.label;
+        button.setAttribute('aria-pressed', selectedRarityFilter === rarity);
+        button.addEventListener('click', () => {
+            selectedRarityFilter = rarity;
+            createRarityFilters();
+            renderAlbum();
+        });
+
+        elements.rarityFilters.appendChild(button);
+    });
+}
+
 function createAlbumCard(cardId) {
     const ownedCount = state.owned[cardId];
     const card = document.createElement('article');
-    card.className = `album-card ${ownedCount > 0 ? 'unlocked' : 'locked'}`;
+    const rarity = cardRarities[cardId];
+    const rarityTheme = rarityThemes[rarity];
+    card.className = `album-card ${ownedCount > 0 ? 'unlocked' : 'locked'} ${rarityTheme.className}`;
 
     const image = new Image();
     image.src = ownedCount > 0 ? imagePath(cardId, 'Front') : imagePath(cardId, 'Back');
@@ -243,7 +292,7 @@ function createAlbumCard(cardId) {
 
     const meta = document.createElement('div');
     meta.className = 'album-meta';
-    meta.innerHTML = `<span class="album-id">#${getCardNumber(cardId)}</span><span class="count ${ownedCount > 0 ? 'positive' : ''}">${ownedCount}</span>`;
+    meta.innerHTML = `<span class="album-id">#${getCardNumber(cardId)} · ${rarity}</span><span class="count ${ownedCount > 0 ? 'positive' : ''}">${ownedCount}</span>`;
 
     card.append(image, meta);
     return card;
@@ -252,6 +301,7 @@ function createAlbumCard(cardId) {
 function renderAlbum() {
     elements.albumContainer.replaceChildren();
     for (let cardId = 0; cardId < TOTAL_CARDS; cardId += 1) {
+        if (selectedRarityFilter !== 'ALL' && cardRarities[cardId] !== selectedRarityFilter) continue;
         elements.albumContainer.appendChild(createAlbumCard(cardId));
     }
 }
@@ -270,6 +320,7 @@ function openBooster() {
 
     saveState();
     renderBooster(drawnCards);
+    createRarityFilters();
     renderStats();
     renderAlbum();
 }
@@ -290,6 +341,7 @@ function sellDuplicates() {
 
     state.currency += gain;
     saveState();
+    createRarityFilters();
     renderStats();
     renderAlbum();
 }
@@ -298,6 +350,7 @@ function resetProgress() {
     state = structuredClone(defaultState);
     saveState();
     elements.boosterContainer.replaceChildren();
+    createRarityFilters();
     renderStats();
     renderAlbum();
 }
@@ -307,6 +360,7 @@ function init() {
     elements.sellDuplicatesBtn.addEventListener('click', sellDuplicates);
     elements.resetBtn.addEventListener('click', resetProgress);
 
+    createRarityFilters();
     renderStats();
     renderAlbum();
 }
