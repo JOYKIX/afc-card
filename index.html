@@ -1,30 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Collectionnez des cartes AFC, ouvrez des boosters et gérez votre album.">
     <link rel="stylesheet" href="style.css">
-    <title>AFC Card</title>
+    <title>AFC Card - Album Booster</title>
 </head>
 
 <body>
+    <main class="app-shell">
+        <header class="hero">
+            <h1>AFC Card</h1>
+            <p>Ouvre des boosters, complète ton album et vends intelligemment tes doublons.</p>
+        </header>
 
-    <header>
-        <h1>AFC Card</h1>
-    </header>
-	
-	<p id="flowerOfHibiscusDisplay">Fleur de Bissap : <span id="flowerCount">500</span></p>
+        <section class="stats-grid" aria-label="Statistiques du joueur">
+            <article class="stat-card">
+                <h2>Fleur de Bissap</h2>
+                <p id="currencyDisplay" class="stat-value">500</p>
+            </article>
+            <article class="stat-card">
+                <h2>Cartes uniques</h2>
+                <p id="uniqueDisplay" class="stat-value">0 / 51</p>
+            </article>
+            <article class="stat-card">
+                <h2>Total cartes</h2>
+                <p id="totalDisplay" class="stat-value">0</p>
+            </article>
+            <article class="stat-card">
+                <h2>Progression album</h2>
+                <p id="progressDisplay" class="stat-value">0%</p>
+            </article>
+        </section>
 
-    <button id="sellDuplicatesBtn">Vendre les doubles</button>
-	
-    <button id="openBoosterBtn">Ouvrir un booster - 50</button>
+        <section class="actions" aria-label="Actions principales">
+            <button id="openBoosterBtn" class="primary-btn">Ouvrir un booster (50)</button>
+            <button id="sellDuplicatesBtn" class="secondary-btn">Vendre tous les doublons</button>
+            <button id="resetBtn" class="ghost-btn">Réinitialiser la sauvegarde</button>
+        </section>
 
-    <div class="booster-container" id="boosterContainer"></div>
+        <section class="booster-section" aria-live="polite">
+            <h2>Dernier booster</h2>
+            <div class="booster-container" id="boosterContainer"></div>
+        </section>
 
-    <div id="totalCardsIndicator"></div>
-
-    <div class="album-container" id="albumContainer" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+        <section class="album-section">
+            <h2>Album complet</h2>
+            <div class="album-container" id="albumContainer"></div>
+        </section>
+    </main>
 
     <script src="script.js"></script>
 </body>

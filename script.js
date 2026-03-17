@@ -1,163 +1,229 @@
-    // Fonction pour créer une carte dans l'album
-    function createAlbumCard(cardIndex) {
-        // Créer la carte de l'album
-        const albumCard = document.createElement('div');
-        albumCard.classList.add('album-card');
-        albumCard.id = `albumCard_${cardIndex}`;
+const TOTAL_CARDS = 51;
+const BOOSTER_COST = 50;
+const CARDS_PER_BOOSTER = 5;
+const SAVE_KEY = 'afc-card-save-v2';
 
-        // Ajouter l'image de la carte dans l'album
-        const cardImage = new Image();
-        cardImage.src = `Card${cardIndex} (Front).jpg`;
-        cardImage.classList.add('album-card-image');
-        albumCard.appendChild(cardImage);
+const rarityWeights = {
+    SSS: 0.04,
+    SPlus: 0.4,
+    S: 3.8,
+    A: 9.6,
+    B: 19.2,
+    C: 28.7,
+    D: 38.3,
+};
 
-        // Ajouter le compteur du nombre de cartes
-        const cardCount = document.createElement('div');
-        cardCount.classList.add('card-count');
-        cardCount.textContent = `x${totalCardCount[cardIndex]}`;
-        albumCard.appendChild(cardCount);
+const sellPriceByRarity = {
+    SSS: 100,
+    SPlus: 75,
+    S: 50,
+    A: 25,
+    B: 15,
+    C: 10,
+    D: 5,
+};
 
-        albumContainer.appendChild(albumCard);
-    }
+const cardRarities = [
+    'SSS', 'A', 'SPlus', 'D', 'D', 'C', 'S', 'A', 'D', 'A',
+    'D', 'S', 'C', 'A', 'A', 'SPlus', 'S', 'C', 'D', 'SPlus',
+    'A', 'S', 'B', 'B', 'A', 'D', 'D', 'SSS', 'SPlus', 'S',
+    'S', 'B', 'SPlus', 'A', 'S', 'S', 'S', 'C', 'B', 'SSS',
+    'S', 'A', 'B', 'S', 'C', 'S', 'A', 'S', 'B', 'S', 'SSS',
+];
 
-    // Gestionnaire d'événement pour le drag and drop
-    function handleDragStart(event) {
-        event.dataTransfer.setData('text/plain', event.target.dataset.cardIndex);
-    }
+const rarityOrder = ['SSS', 'SPlus', 'S', 'A', 'B', 'C', 'D'];
+const cardsByRarity = rarityOrder.reduce((acc, rarity) => {
+    acc[rarity] = [];
+    return acc;
+}, {});
 
-    function allowDrop(event) {
-        event.preventDefault();
-    }
+cardRarities.forEach((rarity, id) => cardsByRarity[rarity].push(id));
 
-    function handleDrop(event) {
-        event.preventDefault();
-        const cardIndex = event.dataTransfer.getData('text/plain');
-        addToAlbum(cardIndex);
-    }
+const elements = {
+    currencyDisplay: document.getElementById('currencyDisplay'),
+    uniqueDisplay: document.getElementById('uniqueDisplay'),
+    totalDisplay: document.getElementById('totalDisplay'),
+    progressDisplay: document.getElementById('progressDisplay'),
+    openBoosterBtn: document.getElementById('openBoosterBtn'),
+    sellDuplicatesBtn: document.getElementById('sellDuplicatesBtn'),
+    resetBtn: document.getElementById('resetBtn'),
+    boosterContainer: document.getElementById('boosterContainer'),
+    albumContainer: document.getElementById('albumContainer'),
+};
 
-    // Monnaie virtuelle
-    let flowerOfHibiscus = 500;
+const defaultState = {
+    currency: 500,
+    owned: Array(TOTAL_CARDS).fill(0),
+};
 
-    // Coût d'un booster
-    const boosterCost = 50;
+let state = loadState();
 
-// Fonction pour vendre les cartes en double à l'agent virtuel
-function sellDuplicates() {
-    for (const cardIndex in totalCardCount) {
-        if (totalCardCount[cardIndex] > 1) {
-            const sellingPrice = calculateSellingPrice(cardIndex);
-            flowerOfHibiscus += sellingPrice * (totalCardCount[cardIndex] - 1);
+function loadState() {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return structuredClone(defaultState);
 
-            // Sauvegarder le nombre total de cartes restantes après la vente
-            const remainingCount = totalCardCount[cardIndex] - 1;
-
-            // Soustraire le nombre de cartes vendues du total
-            totalCardCount[cardIndex] = 1;
-
-            // Mettre à jour le texte pour refléter le nombre total de cartes restantes
-            updateAlbumCardText(cardIndex);
+    try {
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed.owned) || parsed.owned.length !== TOTAL_CARDS) {
+            return structuredClone(defaultState);
         }
-    }
 
-    // Mettre à jour l'affichage du solde de la monnaie virtuelle
-    updateFlowerOfHibiscusDisplay();
+        return {
+            currency: Number.isFinite(parsed.currency) ? parsed.currency : defaultState.currency,
+            owned: parsed.owned.map((count) => Math.max(0, Number(count) || 0)),
+        };
+    } catch {
+        return structuredClone(defaultState);
+    }
 }
 
-    // Fonction pour calculer le prix de vente d'une carte en fonction de sa rareté
-    function calculateSellingPrice(cardIndex) {
-        const rarity = getCardRarity(cardIndex);
-        switch (rarity) {
-            case 'SSS':
-                return 100;
-            case 'SPlus':
-                return 75;
-            case 'S':
-                return 50;
-            case 'A':
-                return 25;
-            case 'B':
-                return 15;
-            case 'C':
-                return 10;
-            case 'D':
-                return 5;
-            default:
-                return 0;
-        }
+function saveState() {
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+}
+
+function getTotalCards() {
+    return state.owned.reduce((sum, count) => sum + count, 0);
+}
+
+function getUniqueCards() {
+    return state.owned.filter((count) => count > 0).length;
+}
+
+function getProgressPercent() {
+    return Math.round((getUniqueCards() / TOTAL_CARDS) * 100);
+}
+
+function pickRarity() {
+    const totalWeight = rarityOrder.reduce((sum, rarity) => sum + rarityWeights[rarity], 0);
+    let roll = Math.random() * totalWeight;
+
+    for (const rarity of rarityOrder) {
+        roll -= rarityWeights[rarity];
+        if (roll <= 0) return rarity;
     }
 
-    // Fonction pour récupérer la rareté d'une carte en fonction de son index
-    function getCardRarity(cardIndex) {
-        const card = cardData.cards.find(card => card.id === parseInt(cardIndex));
-        return card ? card.rarity : '';
+    return 'D';
+}
+
+function drawCardId() {
+    const rarity = pickRarity();
+    const pool = cardsByRarity[rarity];
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return pool[randomIndex];
+}
+
+function imagePath(cardId, side = 'Front') {
+    return `Card${cardId} (${side}).jpg`;
+}
+
+function renderStats() {
+    const unique = getUniqueCards();
+    elements.currencyDisplay.textContent = state.currency.toString();
+    elements.uniqueDisplay.textContent = `${unique} / ${TOTAL_CARDS}`;
+    elements.totalDisplay.textContent = getTotalCards().toString();
+    elements.progressDisplay.textContent = `${getProgressPercent()}%`;
+
+    elements.openBoosterBtn.disabled = state.currency < BOOSTER_COST;
+}
+
+function createBoosterCard(cardId) {
+    const wrapper = document.createElement('article');
+    wrapper.className = 'card';
+
+    const image = new Image();
+    image.src = imagePath(cardId, 'Front');
+    image.alt = `Carte #${cardId}`;
+
+    const footer = document.createElement('div');
+    footer.className = 'card-footer';
+    footer.innerHTML = `<span>#${cardId}</span><span class="badge">${cardRarities[cardId]}</span>`;
+
+    wrapper.append(image, footer);
+    return wrapper;
+}
+
+function renderBooster(cardIds) {
+    elements.boosterContainer.replaceChildren();
+    cardIds.forEach((cardId) => elements.boosterContainer.appendChild(createBoosterCard(cardId)));
+}
+
+function createAlbumCard(cardId) {
+    const ownedCount = state.owned[cardId];
+    const card = document.createElement('article');
+    card.className = `album-card ${ownedCount > 0 ? 'unlocked' : 'locked'}`;
+
+    const image = new Image();
+    image.src = ownedCount > 0 ? imagePath(cardId, 'Front') : imagePath(cardId, 'Back');
+    image.alt = `Carte album #${cardId}`;
+
+    const count = document.createElement('span');
+    count.className = `count ${ownedCount > 0 ? 'positive' : ''}`;
+    count.textContent = ownedCount.toString();
+
+    card.append(image, count);
+    return card;
+}
+
+function renderAlbum() {
+    elements.albumContainer.replaceChildren();
+    for (let cardId = 0; cardId < TOTAL_CARDS; cardId += 1) {
+        elements.albumContainer.appendChild(createAlbumCard(cardId));
+    }
+}
+
+function openBooster() {
+    if (state.currency < BOOSTER_COST) return;
+
+    state.currency -= BOOSTER_COST;
+    const drawnCards = [];
+
+    for (let i = 0; i < CARDS_PER_BOOSTER; i += 1) {
+        const cardId = drawCardId();
+        state.owned[cardId] += 1;
+        drawnCards.push(cardId);
     }
 
-    // Fonction pour mettre à jour l'affichage du solde de la monnaie virtuelle
-    function updateFlowerOfHibiscusDisplay() {
-        const flowerOfHibiscusDisplay = document.getElementById('flowerOfHibiscusDisplay');
-        flowerOfHibiscusDisplay.textContent = `Fleur de Bissap : ${flowerOfHibiscus}`;
-    }
-});
+    saveState();
+    renderBooster(drawnCards);
+    renderStats();
+    renderAlbum();
+}
 
-const cardData = {
-  "SSS": 0.04,
-  "SPlus": 0.4,
-  "S": 3.8,
-  "A": 9.6,
-  "B": 19.2,
-  "C": 28.7,
-  "D": 38.3,
-  "cards": [
-    {"id": 0, "rarity": "SSS"},
-    {"id": 1, "rarity": "A"},
-    {"id": 2, "rarity": "SPlus"},
-    {"id": 3, "rarity": "D"},
-    {"id": 4, "rarity": "D"},
-    {"id": 5, "rarity": "C"},
-    {"id": 6, "rarity": "S"},
-    {"id": 7, "rarity": "A"},
-    {"id": 8, "rarity": "D"},
-    {"id": 9, "rarity": "A"},
-    {"id": 10, "rarity": "D"},
-    {"id": 11, "rarity": "S"},
-    {"id": 12, "rarity": "C"},
-    {"id": 13, "rarity": "A"},
-    {"id": 14, "rarity": "A"},
-    {"id": 15, "rarity": "SPlus"},
-    {"id": 16, "rarity": "S"},
-    {"id": 17, "rarity": "C"},
-    {"id": 18, "rarity": "D"},
-    {"id": 19, "rarity": "SPlus"},
-    {"id": 20, "rarity": "A"},
-    {"id": 21, "rarity": "S"},
-    {"id": 22, "rarity": "B"},
-    {"id": 23, "rarity": "B"},
-    {"id": 24, "rarity": "A"},
-    {"id": 25, "rarity": "D"},
-    {"id": 26, "rarity": "D"},
-    {"id": 27, "rarity": "SSS"},
-    {"id": 28, "rarity": "SPlus"},
-    {"id": 29, "rarity": "S"},
-    {"id": 30, "rarity": "S"},
-    {"id": 31, "rarity": "B"},
-    {"id": 32, "rarity": "SPlus"},
-    {"id": 33, "rarity": "A"},
-    {"id": 34, "rarity": "S"},
-    {"id": 35, "rarity": "S"},
-    {"id": 36, "rarity": "S"},
-    {"id": 37, "rarity": "C"},
-    {"id": 38, "rarity": "B"},
-    {"id": 39, "rarity": "SSS"},
-    {"id": 40, "rarity": "S"},
-    {"id": 41, "rarity": "A"},
-    {"id": 42, "rarity": "B"},
-    {"id": 43, "rarity": "S"},
-    {"id": 44, "rarity": "C"},
-    {"id": 45, "rarity": "S"},
-    {"id": 46, "rarity": "A"},
-    {"id": 47, "rarity": "S"},
-    {"id": 48, "rarity": "B"},
-    {"id": 49, "rarity": "S"},
-    {"id": 50, "rarity": "SSS"},
-  ]
-};
+function sellDuplicates() {
+    let gain = 0;
+
+    state.owned = state.owned.map((count, cardId) => {
+        if (count <= 1) return count;
+
+        const extras = count - 1;
+        const rarity = cardRarities[cardId];
+        gain += extras * sellPriceByRarity[rarity];
+        return 1;
+    });
+
+    if (gain === 0) return;
+
+    state.currency += gain;
+    saveState();
+    renderStats();
+    renderAlbum();
+}
+
+function resetProgress() {
+    state = structuredClone(defaultState);
+    saveState();
+    elements.boosterContainer.replaceChildren();
+    renderStats();
+    renderAlbum();
+}
+
+function init() {
+    elements.openBoosterBtn.addEventListener('click', openBooster);
+    elements.sellDuplicatesBtn.addEventListener('click', sellDuplicates);
+    elements.resetBtn.addEventListener('click', resetProgress);
+
+    renderStats();
+    renderAlbum();
+}
+
+init();
