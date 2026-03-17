@@ -93,6 +93,10 @@ function getProgressPercent() {
     return Math.round((getUniqueCards() / TOTAL_CARDS) * 100);
 }
 
+function getCardNumber(cardId) {
+    return cardId + 1;
+}
+
 function pickRarity() {
     const totalWeight = rarityOrder.reduce((sum, rarity) => sum + rarityWeights[rarity], 0);
     let roll = Math.random() * totalWeight;
@@ -126,25 +130,106 @@ function renderStats() {
     elements.openBoosterBtn.disabled = state.currency < BOOSTER_COST;
 }
 
+function setupSwipeReveal(wrapper, threshold = 90) {
+    let isPointerDown = false;
+    let startX = 0;
+
+    const moveCard = (deltaX) => {
+        wrapper.style.setProperty('--swipe-offset', `${deltaX}px`);
+        const angle = Math.max(-16, Math.min(16, deltaX / 9));
+        wrapper.style.setProperty('--swipe-angle', `${angle}deg`);
+    };
+
+    wrapper.addEventListener('pointerdown', (event) => {
+        if (wrapper.classList.contains('revealed')) return;
+        isPointerDown = true;
+        startX = event.clientX;
+        wrapper.classList.add('is-dragging');
+        wrapper.setPointerCapture(event.pointerId);
+    });
+
+    wrapper.addEventListener('pointermove', (event) => {
+        if (!isPointerDown || wrapper.classList.contains('revealed')) return;
+        const deltaX = event.clientX - startX;
+        moveCard(deltaX);
+    });
+
+    wrapper.addEventListener('pointerup', (event) => {
+        if (!isPointerDown || wrapper.classList.contains('revealed')) return;
+
+        isPointerDown = false;
+        wrapper.classList.remove('is-dragging');
+        wrapper.releasePointerCapture(event.pointerId);
+        const deltaX = event.clientX - startX;
+
+        if (Math.abs(deltaX) >= threshold) {
+            wrapper.classList.add('revealed');
+            wrapper.style.removeProperty('--swipe-offset');
+            wrapper.style.removeProperty('--swipe-angle');
+            return;
+        }
+
+        wrapper.classList.add('snap-back');
+        wrapper.style.removeProperty('--swipe-offset');
+        wrapper.style.removeProperty('--swipe-angle');
+        setTimeout(() => wrapper.classList.remove('snap-back'), 220);
+    });
+
+    wrapper.addEventListener('pointercancel', () => {
+        isPointerDown = false;
+        wrapper.classList.remove('is-dragging');
+        wrapper.classList.add('snap-back');
+        wrapper.style.removeProperty('--swipe-offset');
+        wrapper.style.removeProperty('--swipe-angle');
+        setTimeout(() => wrapper.classList.remove('snap-back'), 220);
+    });
+}
+
 function createBoosterCard(cardId) {
     const wrapper = document.createElement('article');
-    wrapper.className = 'card';
+    wrapper.className = 'card booster-reveal-card';
+
+    const inner = document.createElement('div');
+    inner.className = 'booster-card-inner';
+
+    const backFace = document.createElement('div');
+    backFace.className = 'card-face card-face-back';
+    const backImage = new Image();
+    backImage.src = imagePath(cardId, 'Back');
+    backImage.alt = `Dos carte #${getCardNumber(cardId)}`;
+
+    const backHint = document.createElement('p');
+    backHint.className = 'swipe-hint';
+    backHint.textContent = 'Swipe ↔ pour révéler';
+
+    backFace.append(backImage, backHint);
+
+    const frontFace = document.createElement('div');
+    frontFace.className = 'card-face card-face-front';
 
     const image = new Image();
     image.src = imagePath(cardId, 'Front');
-    image.alt = `Carte #${cardId}`;
+    image.alt = `Carte #${getCardNumber(cardId)}`;
 
     const footer = document.createElement('div');
     footer.className = 'card-footer';
-    footer.innerHTML = `<span>#${cardId}</span><span class="badge">${cardRarities[cardId]}</span>`;
+    footer.innerHTML = `<span>#${getCardNumber(cardId)}</span><span class="badge">${cardRarities[cardId]}</span>`;
 
-    wrapper.append(image, footer);
+    frontFace.append(image, footer);
+    inner.append(backFace, frontFace);
+    wrapper.appendChild(inner);
+
+    setupSwipeReveal(wrapper);
     return wrapper;
 }
 
 function renderBooster(cardIds) {
     elements.boosterContainer.replaceChildren();
-    cardIds.forEach((cardId) => elements.boosterContainer.appendChild(createBoosterCard(cardId)));
+    cardIds.forEach((cardId, index) => {
+        const card = createBoosterCard(cardId);
+        card.style.animationDelay = `${index * 120}ms`;
+        elements.boosterContainer.appendChild(card);
+    });
 }
 
 function createAlbumCard(cardId) {
@@ -154,13 +239,13 @@ function createAlbumCard(cardId) {
 
     const image = new Image();
     image.src = ownedCount > 0 ? imagePath(cardId, 'Front') : imagePath(cardId, 'Back');
-    image.alt = `Carte album #${cardId}`;
+    image.alt = `Carte album #${getCardNumber(cardId)}`;
 
-    const count = document.createElement('span');
-    count.className = `count ${ownedCount > 0 ? 'positive' : ''}`;
-    count.textContent = ownedCount.toString();
+    const meta = document.createElement('div');
+    meta.className = 'album-meta';
+    meta.innerHTML = `<span class="album-id">#${getCardNumber(cardId)}</span><span class="count ${ownedCount > 0 ? 'positive' : ''}">${ownedCount}</span>`;
 
-    card.append(image, count);
+    card.append(image, meta);
     return card;
 }
 

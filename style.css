@@ -1,11 +1,11 @@
 :root {
-    --bg: #0f172a;
-    --panel: #1e293b;
-    --panel-soft: #334155;
-    --accent: #f43f5e;
-    --accent-2: #fb7185;
+    --bg: #070c1a;
+    --panel: #111a30;
+    --panel-soft: #1c2a4a;
+    --accent: #ff4d7d;
+    --accent-2: #7c89ff;
     --text: #f8fafc;
-    --muted: #cbd5e1;
+    --muted: #b8c2d7;
     --success: #22c55e;
 }
 
@@ -18,22 +18,41 @@ body {
     min-height: 100vh;
     font-family: Inter, "Segoe UI", Arial, sans-serif;
     color: var(--text);
-    background: radial-gradient(circle at top, #1e1b4b 0%, var(--bg) 55%);
+    background:
+        radial-gradient(circle at 15% 0%, rgba(124, 137, 255, 0.35), transparent 42%),
+        radial-gradient(circle at 85% 10%, rgba(255, 77, 125, 0.3), transparent 37%),
+        linear-gradient(170deg, #0b1022 0%, var(--bg) 58%);
 }
 
 .app-shell {
     width: min(1200px, 94vw);
     margin: 0 auto;
-    padding: 2rem 0 3rem;
+    padding: 2.2rem 0 3rem;
+}
+
+.hero {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.08), rgba(17, 26, 48, 0.6));
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 1.3rem 1.4rem;
+    backdrop-filter: blur(6px);
+}
+
+.hero-kicker {
+    margin: 0;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #c4d2ff;
+    font-size: .74rem;
 }
 
 .hero h1 {
-    margin: 0;
+    margin: .2rem 0 0;
     font-size: clamp(2rem, 4vw, 3rem);
 }
 
 .hero p {
-    margin: .4rem 0 1.5rem;
+    margin: .5rem 0 0;
     color: var(--muted);
 }
 
@@ -41,10 +60,11 @@ body {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: .8rem;
+    margin-top: .95rem;
 }
 
 .stat-card {
-    background: linear-gradient(160deg, rgba(244, 63, 94, .2), rgba(30, 41, 59, .95));
+    background: linear-gradient(160deg, rgba(255, 77, 125, 0.16), rgba(17, 26, 48, .95));
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 14px;
     padding: .9rem;
@@ -76,6 +96,11 @@ button {
     color: white;
     font-weight: 600;
     padding: .75rem 1rem;
+    transition: transform .18s ease, box-shadow .18s ease, opacity .2s ease;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-1px);
 }
 
 button:disabled {
@@ -85,6 +110,7 @@ button:disabled {
 
 .primary-btn {
     background: linear-gradient(120deg, var(--accent), var(--accent-2));
+    box-shadow: 0 8px 16px rgba(124, 137, 255, 0.28);
 }
 
 .secondary-btn {
@@ -101,25 +127,95 @@ button:disabled {
     margin-top: 1rem;
 }
 
+.section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.section-head p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .92rem;
+}
+
 .booster-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
     gap: .85rem;
+    margin-top: .5rem;
 }
 
 .card {
-    background: var(--panel);
+    background: rgba(13, 19, 38, 0.75);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, .2);
+    box-shadow: 0 14px 28px rgba(0, 0, 0, .3);
 }
 
-.card img {
+.booster-reveal-card {
+    cursor: grab;
+    perspective: 1200px;
+    transform: translateX(var(--swipe-offset, 0)) rotate(var(--swipe-angle, 0));
+    animation: card-enter .45s ease both;
+    touch-action: pan-y;
+}
+
+.booster-reveal-card.is-dragging {
+    transition: none;
+}
+
+.booster-reveal-card.snap-back {
+    transition: transform .2s ease;
+}
+
+.booster-card-inner {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform .55s cubic-bezier(.2, .77, .26, 1.02);
+}
+
+.booster-reveal-card.revealed {
+    cursor: default;
+}
+
+.booster-reveal-card.revealed .booster-card-inner {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    backface-visibility: hidden;
+}
+
+.card-face-front {
+    transform: rotateY(180deg);
+}
+
+.card-face img {
     width: 100%;
     aspect-ratio: 244 / 341;
     object-fit: cover;
     display: block;
+}
+
+.card-face-back {
+    position: relative;
+}
+
+.swipe-hint {
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    transform: translateX(-50%);
+    margin: 0;
+    font-size: .74rem;
+    background: rgba(7, 12, 26, 0.78);
+    border-radius: 999px;
+    padding: .25rem .6rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .card-footer {
@@ -138,13 +234,12 @@ button:disabled {
 
 .album-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: .5rem;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: .6rem;
 }
 
 .album-card {
-    position: relative;
-    border-radius: 10px;
+    border-radius: 11px;
     overflow: hidden;
     background: #020617;
     border: 1px solid rgba(255, 255, 255, 0.15);
@@ -161,18 +256,40 @@ button:disabled {
     filter: grayscale(1) brightness(.35);
 }
 
+.album-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .3rem .35rem;
+    background: rgba(8, 13, 28, .9);
+}
+
+.album-id {
+    color: #d4dbed;
+    font-size: .72rem;
+}
+
 .count {
-    position: absolute;
-    right: 4px;
-    bottom: 4px;
     border-radius: 999px;
     min-width: 1.5rem;
     text-align: center;
-    padding: .2rem .4rem;
+    padding: .16rem .42rem;
     background: rgba(2, 6, 23, .85);
-    font-size: .78rem;
+    font-size: .74rem;
 }
 
 .count.positive {
     background: rgba(34, 197, 94, .9);
+}
+
+@keyframes card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
