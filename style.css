@@ -1,148 +1,178 @@
+:root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-soft: #334155;
+    --accent: #f43f5e;
+    --accent-2: #fb7185;
+    --text: #f8fafc;
+    --muted: #cbd5e1;
+    --success: #22c55e;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
     margin: 0;
-    background-color: #232323;
-    font-family: 'Arial', sans-serif;
-    color: #fff;
+    min-height: 100vh;
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    color: var(--text);
+    background: radial-gradient(circle at top, #1e1b4b 0%, var(--bg) 55%);
 }
 
-.container {
-    text-align: center;
+.app-shell {
+    width: min(1200px, 94vw);
+    margin: 0 auto;
+    padding: 2rem 0 3rem;
 }
 
-#openBoosterBtn {
-    margin: 20px;
-    padding: 10px 20px;
+.hero h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.hero p {
+    margin: .4rem 0 1.5rem;
+    color: var(--muted);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: .8rem;
+}
+
+.stat-card {
+    background: linear-gradient(160deg, rgba(244, 63, 94, .2), rgba(30, 41, 59, .95));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: .9rem;
+}
+
+.stat-card h2 {
+    margin: 0;
+    color: var(--muted);
+    font-size: .95rem;
+}
+
+.stat-value {
+    margin: .45rem 0 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin: 1.25rem 0;
+}
+
+button {
+    border: 0;
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 16px;
-    background-color: #ff69b4; /* Couleur pour les fleurs de bissap */
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    transition: background-color 0.3s;
+    color: white;
+    font-weight: 600;
+    padding: .75rem 1rem;
 }
 
-#openBoosterBtn:hover {
-    background-color: #ff1493; /* Couleur de survol pour les fleurs de bissap */
+button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+.primary-btn {
+    background: linear-gradient(120deg, var(--accent), var(--accent-2));
+}
+
+.secondary-btn {
+    background: #2563eb;
+}
+
+.ghost-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.booster-section,
+.album-section {
+    margin-top: 1rem;
 }
 
 .booster-container {
-    display: flex;
-    flex-wrap: wrap;
-    perspective: 1000px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: .85rem;
 }
 
 .card {
-    width: 244px;
-    height: 341.33px;
-    margin: 15px;
-    perspective: 1000px;
-    transform-style: preserve-3d;
-    cursor: pointer;
-    transition: transform 0.5s;
-    overflow: visible;
+    background: var(--panel);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, .2);
 }
 
-.card:hover {
-    transform: scale(1.1);
-}
-
-.card-inner {
+.card img {
     width: 100%;
-    height: 100%;
-    transform-style: preserve-3d;
-    transition: transform 0.5s;
-    transform: rotateY(180deg);
+    aspect-ratio: 244 / 341;
+    object-fit: cover;
+    display: block;
 }
 
-.card.opened .card-inner {
-    transform: rotateY(0deg);
+.card-footer {
+    padding: .5rem .65rem .75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.card-face,
-.card-back {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    backface-visibility: hidden;
-    border-radius: 10px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    background-size: cover;
-}
-
-.card-face {
-    transform: rotateY(0deg);
-    background-color: #8b4513; /* Couleur pour les fleurs de bissap */
-}
-
-.card-back {
-    transform: rotateY(-180deg);
-    background-color: #2f4f4f; /* Couleur pour les fleurs de bissap */
+.badge {
+    border-radius: 999px;
+    padding: .15rem .5rem;
+    font-size: .8rem;
+    background: var(--panel-soft);
 }
 
 .album-container {
-    display: flex;
-    flex-wrap: wrap;
-    perspective: 1000px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: .5rem;
 }
 
 .album-card {
     position: relative;
-    margin: 5px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #020617;
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.album-card .album-card-image {
-    width: 50px; /* Ajustez la largeur comme souhaité pour les images miniatures */
-    height: auto;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.album-card img {
+    width: 100%;
+    aspect-ratio: 244 / 341;
+    object-fit: cover;
+    display: block;
 }
 
-.card-count {
+.album-card.locked img {
+    filter: grayscale(1) brightness(.35);
+}
+
+.count {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    background-color: #000;
-    color: #fff;
-    padding: 2px 5px;
-    border-radius: 0 0 5px 5px;
-    font-size: 12px;
+    right: 4px;
+    bottom: 4px;
+    border-radius: 999px;
+    min-width: 1.5rem;
+    text-align: center;
+    padding: .2rem .4rem;
+    background: rgba(2, 6, 23, .85);
+    font-size: .78rem;
 }
 
-.album-card.unlocked .album-card-image {
-    background-color: #ff69b4; /* Couleur pour les fleurs de bissap */
-}
-
-.album-card.unlocked .card-count {
-    visibility: visible;
-}
-
-.album-card.unlocked .album-card-back {
-    visibility: visible;
-}
-
-#totalCardsIndicator {
-    margin-top: 20px;
-    font-size: 18px;
-}
-
-/* Ajout de styles pour le bouton de vente des doubles */
-#sellDuplicatesBtn {
-    margin: 20px;
-    padding: 10px 20px;
-    cursor: pointer;
-    font-size: 16px;
-    background-color: #e74c3c; /* Rouge */
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-}
-
-#sellDuplicatesBtn:hover {
-    background-color: #c0392b; /* Rouge plus foncé au survol */
+.count.positive {
+    background: rgba(34, 197, 94, .9);
 }
